@@ -28,6 +28,17 @@ class keyTokenServices { // Định nghĩa class keyTokenServices để chứa c
     static removeKeyById = async(id)=>{
         return await KeyTokenModel.deleteMany(id)
     }
+    static findByRefreshTokenUsed = async(refreshToken)=>{
+        return await KeyTokenModel.findOne({
+            refreshTokensUsed:refreshToken
+        }).lean()
+    }
+    static findByRefreshToken = async(refreshToken)=>{
+        return await KeyTokenModel.findOne({refreshToken})
+    }
+    static deleteKeyByuserId = async(userId)=>{
+        return await KeyTokenModel.findOneAndDelete({user:userId})
+    }
 }
 
 module.exports = keyTokenServices // Xuất class keyTokenServices để sử dụng ở nơi khác

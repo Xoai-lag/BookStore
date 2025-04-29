@@ -15,6 +15,8 @@ router.use(authentication)
 
 //Handler logout chỉ được chạy nếu middleware authentication gọi next() (tức là request được xác thực thành công).
 router.post('/BookStore/Logout', asyncHandler(accessController.logout)); 
+router.post('/BookStore/handlerRefreshToken', asyncHandler(accessController.handlerRefreshToken)); 
+
 
 module.exports = router;  // Xuất router để sử dụng trong các module khác
 

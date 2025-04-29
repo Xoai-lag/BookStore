@@ -14,6 +14,7 @@ const { BadRequestError, AuthFailureError, NotFoundError } = require('../core/er
 
 //services
 const { findByuserId } = require('../services/keyToken.services')
+const { token } = require('morgan')
 
 const createTokenPair = async (payload, publicKey, privateKey) => { // Định nghĩa hàm createTokenPair để tạo cặp accessToken và refreshToken
     try { // Bắt đầu khối try-catch để xử lý lỗi
@@ -74,7 +75,12 @@ const authentication = asyncHandler(async(req,res,next)=>{
     }
 })
 
+const verifyJWT = async (token, keySecret)=>{
+    return await JWT.verify(token,keySecret)
+}
+
 module.exports = { // Xuất hàm createTokenPair để sử dụng ở nơi khác
     createTokenPair,
-    authentication
+    authentication,
+    verifyJWT
 }
