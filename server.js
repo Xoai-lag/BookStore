@@ -12,5 +12,5 @@ process.on('SIGINT',async ()=>{
     console.log('\nGracefully shutting down...');
     await mongoose.connection.close(); // hoặc mongoose.disconnect()
     console.log('MongoDB connection closed.');
-    sever.close(()=>console.log('Exit Sever Express'))
+    server.close(()=>console.log('Exit Sever Express'))
 })

@@ -2,15 +2,16 @@
 
 
 
-const HEADER={
-    API_KEY : 'x-api-key',
-    AUTHORIZATION:'authorization',
-    CLIENT_ID:'x-client-id',
+const HEADER = {
+    API_KEY: 'x-api-key',
+    AUTHORIZATION: 'authorization',
+    CLIENT_ID: 'x-client-id',
+    REFRESHTOKEN: 'x-rtoken-id'
 }
 
 const JWT = require('jsonwebtoken') // Import thư viện jsonwebtoken để tạo và xác minh token
 const asyncHandler = require('../helpers/asyncHandler')
-const { BadRequestError, AuthFailureError, NotFoundError } = require('../core/error.response')
+const { AuthFailureError, NotFoundError } = require('../core/error.response')
 
 //services
 const { findByuserId } = require('../services/keyToken.services')
@@ -37,50 +38,63 @@ const createTokenPair = async (payload, publicKey, privateKey) => { // Định n
 
         return { accessToken, refreshToken } // Trả về cặp accessToken và refreshToken
     } catch (error) { // Xử lý lỗi nếu có (khối catch hiện tại để trống)
-        
+
     }
 }
 
-const authentication = asyncHandler(async(req,res,next)=>{
-    /*
-    step:
-    1. check userId missing 
-    2. get accessToken
-    3. verifyToken
-    4. check user in dbs
-    5. check keyCustomer with this userId
-    6. Ok all => return next
-    */
-
-    //1
-    const userId = req.headers[HEADER.CLIENT_ID]
-    if(!userId) throw new AuthFailureError('Invalid Request!')
-
-    //2
-    const keyCustomer = await findByuserId(userId)
-    if(!keyCustomer) throw new NotFoundError('Not Found KeyCustomer!')
-    
-    //3
-    const accessToken = req.headers[HEADER.AUTHORIZATION]
-    if(!accessToken) throw new AuthFailureError('Invalid Request!')
-
-    //4
-    try {
-        const decodeUser = JWT.verify(accessToken,keyCustomer.publicKey)
-        if(userId!==decodeUser.userId) throw new AuthFailureError('Invalid Id!')
-        req.keyCustomer = keyCustomer
-        return next()
-    } catch (error) {
-        throw error
+const authenticationV1 = asyncHandler(async (req, res, next) => {
+    if (req.headers[HEADER.AUTHORIZATION]) {
+        try {
+            const accessToken = req.headers[HEADER.AUTHORIZATION]
+            if (!accessToken) throw new AuthFailureError('Access Token Required!');
+            const decodeUser = JWT.verify(accessToken, req.keyCustomer.publicKey)
+            if (req.userId !== decodeUser.userId) throw new AuthFailureError('Invalid Id!')
+            return next()
+        } catch (error) {
+            throw error
+        }
     }
+    return next()
 })
 
-const verifyJWT = async (token, keySecret)=>{
-    return await JWT.verify(token,keySecret)
+
+const preAuthentication = asyncHandler(async(req,res,next)=>{
+    const userId = req.headers[HEADER.CLIENT_ID]
+    if (!userId) throw new AuthFailureError('Invalid Request!')
+
+    const keyCustomer = await findByuserId(userId)
+    if (!keyCustomer) throw new NotFoundError('Not Found KeyCustomer!')
+    
+    req.keyCustomer=keyCustomer
+    req.userId=userId
+    return next()
+})
+
+const authenticationV2 = asyncHandler(async (req, res, next) => {
+    if (req.headers[HEADER.REFRESHTOKEN]) {
+        try {
+            const refreshToken = req.headers[HEADER.REFRESHTOKEN]
+            if (!refreshToken) throw new AuthFailureError('Refresh Token Required!');
+            const decodeUser = JWT.verify(refreshToken, req.keyCustomer.privateKey)
+            if (req.userId !== decodeUser.userId) throw new AuthFailureError('Invalid Id!')
+            req.user = decodeUser
+            req.refreshToken = refreshToken
+            return next()
+        } catch (error) {
+            throw error
+        }
+    }
+    return next()
+})
+
+const verifyJWT = async (token, keySecret) => {
+    return await JWT.verify(token, keySecret)
 }
 
 module.exports = { // Xuất hàm createTokenPair để sử dụng ở nơi khác
     createTokenPair,
-    authentication,
+    authenticationV1,
+    authenticationV2,
+    preAuthentication,
     verifyJWT
 }

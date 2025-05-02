@@ -6,7 +6,7 @@ Content-Type: application/json
 x-api-key:963f9a4f8e0d23d390e1d2d7209f551e973e58d549dd8fc5b36b2dcfe2c6352694cbcd0b209072e6327214042b31061f2df476909c68b875d0c6a4160d301c5b
 
 {
-    "UserName":"Duy",
-    "Email":"index@gmail.com",
+    "UserName":"abc",
+    "Email":"abc@gmail.com",
     "Password":"abc123"
 }

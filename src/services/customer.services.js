@@ -9,6 +9,10 @@ const findByEmail = async({email,select={
     return await CustomerModel.findOne({Email:email}).select(select).select('+Password').lean()
 }
 
+const findByUserId = async(userId)=>{
+    return await CustomerModel.findOne({_id:userId}).lean()
+}
 module.exports={
-    findByEmail
+    findByEmail,
+    findByUserId
 }

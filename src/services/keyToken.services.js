@@ -22,7 +22,7 @@ class keyTokenServices { // Định nghĩa class keyTokenServices để chứa c
     }
 
     static findByuserId = async(userId)=>{
-        return await KeyTokenModel.findOne({user: new Types.ObjectId(userId)}).lean()
+        return await KeyTokenModel.findOne({user: new Types.ObjectId(userId)})
     }
 
     static removeKeyById = async(id)=>{

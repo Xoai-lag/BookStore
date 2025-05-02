@@ -2,7 +2,7 @@
 const express = require('express');  // Nhập thư viện Express
 const accessController = require('../../controllers/access.controller');  // Nhập controller xử lý đăng ký
 const  asyncHandler  = require('../../helpers/asyncHandler');
-const { authentication } = require('../../auth/authUtils');
+const { authenticationV2, preAuthentication, authenticationV1 } = require('../../auth/authUtils');
 const router = express.Router();  // Tạo router mớiS
 
 // Định nghĩa route POST cho việc đăng ký
@@ -11,11 +11,11 @@ router.post('/BookStore/Login', asyncHandler(accessController.login));
 
 //authentication kiểm tra các thông tin trong header của client
 //Middleware authentication được áp dụng cho tất cả các route được định nghĩa sau nó
-router.use(authentication)
+router.use(preAuthentication)
 
 //Handler logout chỉ được chạy nếu middleware authentication gọi next() (tức là request được xác thực thành công).
-router.post('/BookStore/Logout', asyncHandler(accessController.logout)); 
-router.post('/BookStore/handlerRefreshToken', asyncHandler(accessController.handlerRefreshToken)); 
+router.post('/BookStore/Logout', authenticationV1, asyncHandler(accessController.logout)); 
+router.post('/BookStore/handlerRefreshToken', authenticationV2,asyncHandler(accessController.handlerRefreshToken)); 
 
 
 module.exports = router;  // Xuất router để sử dụng trong các module khác

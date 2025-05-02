@@ -4,7 +4,7 @@ const CustomerModel = require("../models/Customer.Model") // Import CustomerMode
 const bcrypt = require('bcrypt') // Import bcrypt để mã hóa mật khẩu
 const crypto = require('crypto'); // Import crypto để tạo khóa ngẫu nhiên (privateKey, publicKey)
 const keyTokenServices = require("./keyToken.services"); // Import keyTokenServices để lưu khóa vào database
-const { createTokenPair, verifyJWT, authentication } = require("../auth/authUtils"); // Import hàm createTokenPair để tạo cặp token (accessToken, refreshToken)
+const { createTokenPair } = require("../auth/authUtils"); // Import hàm createTokenPair để tạo cặp token (accessToken, refreshToken)
 const { getInfoData } = require("../utils"); // Import hàm getInfoData để lọc dữ liệu trả về
 const { BadRequestError, InternalServerError, AuthFailureError } = require("../core/error.response");
 
@@ -18,41 +18,34 @@ class AccessServices { // Định nghĩa class AccessServices để chứa các 
     /*
         check this token used
     */ 
-    static handlerRefreshToken = async( refreshToken )=>{
 
-        // check token này đã từng được sử dụng chưa 
-        const foundToken = await keyTokenServices.findByRefreshTokenUsed(refreshToken)
-        
-        if(foundToken){//đã được sử dụng 
-            const {userId,email}= await verifyJWT(refreshToken,foundToken.privateKey)
-            console.log({userId,email})
-            //Xóa tất cả token trong keyTokens 
-            await keyTokenServices.deleteKeyByuserId(userId)
-            throw new BadRequestError('Something Wrong Happend')
-            
-        }
-        const holderToken =await keyTokenServices.findByRefreshToken(refreshToken)
-        if(!holderToken) throw new AuthFailureError('Shop Not Registered !')
-
-        const {userId,email}= await verifyJWT(refreshToken,holderToken.privateKey)
-
-        const foundCustomer = await findByEmail({email})
-        if(!foundCustomer) throw new AuthFailureError('Shop Not Registered !')
-
-        const tokens = await createTokenPair({userId,email}, holderToken.publicKey,holderToken.privateKey) 
-        await holderToken.updateOne({
-            $set:{
-                refreshToken:tokens.refreshToken
-            },
-            $addToSet:{
-                refreshTokensUsed:refreshToken
+        static handlerRefreshTokenV2 = async( {keyCustomer,user,refreshToken} )=>{
+            const { userId,email } = user;
+            if(keyCustomer.refreshTokensUsed.includes(refreshToken)){
+                await keyTokenServices.deleteKeyByuserId(userId)
+                throw new BadRequestError('Something Wrong Happend')
             }
-        })
-        return {
-            user:{userId,email},
-            tokens
+            if(keyCustomer.refreshToken !== refreshToken) throw new AuthFailureError('Customer Not registered!')
+
+            const foundCustomer = await findByEmail({email})
+            if(!foundCustomer) throw new AuthFailureError('Shop Not Registered !')
+             //Cấp lại cặp token mới bằng publicKey và privateKey
+            const tokens = await createTokenPair({userId,email}, keyCustomer.publicKey,keyCustomer.privateKey) 
+            await keyCustomer.updateOne({
+                //Gán refreshToken mới vào dbs
+                $set:{
+                    refreshToken:tokens.refreshToken
+                },
+                // Thêm refreshToken cũ vào danh sách refreshTToken đã sử dụng 
+                $addToSet:{
+                    refreshTokensUsed:refreshToken
+                }
+            })
+            return {
+                user,
+                tokens
+            }
         }
-    }
 
     static logout = async(keyCustomer)=>{
         const delkeyCustomer = await keyTokenServices.removeKeyById(keyCustomer._id)
