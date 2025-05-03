@@ -1,6 +1,7 @@
 'use strict'
 
 const { Schema, model } = require('mongoose')
+const slugify = require('slugify')
 
 const DOCUMENT_NAME = 'product'
 const COLLECTION_NAME = 'products'
@@ -17,6 +18,7 @@ const ProductSchema = new Schema({
     product_description: {
         type: String,
     },
+    product_slug:String,
     product_price: {
         type: Number,
         required: true,
@@ -25,10 +27,34 @@ const ProductSchema = new Schema({
         type: Number,
         required: true,
     },
+    product_variations:{
+        type:Array,
+        default:[]
+    },
+    isDraft:{
+        type:Boolean,
+        default:true,
+        index:true,
+        select:false
+    },
+    isPublish:{
+        type:Boolean,
+        default:false,
+        index:true,
+        select:false
+    },
     product_type: {
         type: String,
         required: true,
         enum: ['Book', 'Stationery', 'Gift'] // Loại sản phẩm: Sách, Dụng cụ học tập, Quà tặng
+    },
+    product_ratingsAverage: {
+        type: Number,
+        default: 4.5,
+        min: [1, 'Rating must be above 1.0'],
+        max: [5, 'Rating must be below 5.0'],
+
+        set: (val) => Math.round(val * 10) / 10
     },
     product_attributes: {
         type: Schema.Types.Mixed, // Dùng Mixed để hỗ trợ đa hình
@@ -39,6 +65,23 @@ const ProductSchema = new Schema({
     collection: COLLECTION_NAME,
     timestamps: true,
 });
+
+//create index for search
+
+ProductSchema.index({product_name:'text',product_description:'text'})
+
+
+
+//Document middleware: runs before .save() and .create()
+
+ProductSchema.pre('save',function(next){
+    this.product_slug=slugify(this.product_name,{lower:true})
+    next()
+})
+
+
+
+
 
 //define the product type = books
 const bookSchema = new Schema({
@@ -139,13 +182,13 @@ const giftSchema = new Schema({
         type: String,
         enum: ['Box', 'Bag', 'Wrap']
     }
-},{
+}, {
     collection: 'gifts',
     timestamps: true,
 })
 module.exports = {
-    product:model(DOCUMENT_NAME, ProductSchema),
-    book:model('book', bookSchema),
-    stationery:model('stationery', stationerySchema),
-    gift:model('gift',giftSchema)
+    product: model(DOCUMENT_NAME, ProductSchema),
+    book: model('book', bookSchema),
+    stationery: model('stationery', stationerySchema),
+    gift: model('gift', giftSchema)
 }

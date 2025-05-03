@@ -40,7 +40,7 @@ app.use('', require('./routers'))
 // Xử lý lỗi - middleware để xử lý các lỗi xảy ra trong ứng dụng
 app.use((req,res,next)=>{
   const error = new Error('Not Found')
-  error.stack = 404
+  error.status = 404
   next(error)
 })
 app.use((error,req,res,next)=>{
@@ -48,7 +48,7 @@ app.use((error,req,res,next)=>{
   return res.status(statusCode).json({
     status:'error',
     code: statusCode,
-    // stack:error.stack,
+    stack:error.stack,
     message: error.message || 'Internal Server Error'
   })
 })
