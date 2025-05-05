@@ -93,7 +93,7 @@ class AccessServices { // Định nghĩa class AccessServices để chứa các 
                 tokens 
             };
             } catch (error) {
-                console.error(error)
+                throw error
         }
 
     }

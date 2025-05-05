@@ -2,6 +2,7 @@
 
 const { product } = require('../Product.Model')
 const { getSelectData, unGetSelectData } = require('../../utils/index')
+const { model } = require('mongoose')
 
 const findAllDraftsForOrganization = async (query, limit, skip) => {
     return await queryProduct(query, limit, skip)
@@ -46,6 +47,14 @@ const unpublishProduct = async ({ product_id }) => {
     return modifiedCount
 }
 
+//update
+
+const updateProductById = async ({productId,bodyUpdate,model,isNew=true})=>{
+    return await model.findByIdAndUpdate(productId,bodyUpdate,{
+        new:isNew
+    })
+}
+
 //Do cả find Draft và find Publish đều dùng chung phương thức query nên tạo 1 fn queryProduct để tái sử dụng 
 const queryProduct = async (query, limit, skip) => {
     return await product.find(query).
@@ -72,6 +81,11 @@ const findProduct = async ({product_id,unSelect})=>{
     return await product.findById(product_id).select(unGetSelectData(unSelect))
 }
 
+//delete 
+const deleteProductById = async({productId,model})=>{
+    return await model.findByIdAndDelete(productId)
+}
+
 module.exports = {
     findAllDraftsForOrganization,
     findAllPublishForOrganization,
@@ -79,5 +93,7 @@ module.exports = {
     unpublishProduct,
     searchProduct,
     findAllProducts,
-    findProduct
+    findProduct,
+    updateProductById,
+    deleteProductById
 }

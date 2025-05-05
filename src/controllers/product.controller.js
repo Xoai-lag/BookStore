@@ -30,6 +30,15 @@ class ProductController {
     }
 
 
+    //update product
+
+    updateProduct= async (req,res,next)=>{
+        new SuccessResponse({
+            message: 'Update Product Success',
+            metadata: await ProductService.updateProduct(req.body.product_type,req.params.productId,req.body)
+        }).send(res)
+    }
+
     //query
 
     getListSearchProduct = async (req, res, next) => {
@@ -71,6 +80,12 @@ class ProductController {
             metadata: await ProductService.findProduct({
                 product_id:req.params.product_id
             })
+        }).send(res)
+    } 
+    deleteProduct = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Delete Product Success!',
+            metadata: await ProductService.deleteProduct(req.body.product_type,req.params.productId)
         }).send(res)
     } 
 }

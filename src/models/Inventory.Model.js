@@ -1,7 +1,7 @@
 'use strict';
 const mongoose = require('mongoose');
 
-// Khai báo Schema cho mô hình MongoDB của Inventory (Kho sách)
+// Khai báo Schema cho mô hình MongoDB của Inventory (Kho)
 var InventorySchema = new mongoose.Schema({
     // BookId: Tham chiếu đến mô hình Book (Sách), bắt buộc
     BookId: {

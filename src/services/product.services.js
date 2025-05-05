@@ -9,7 +9,10 @@ const { findAllDraftsForOrganization,
     unpublishProduct,
     publishProduct,
     findAllProducts,
-    findProduct } = require('../models/repositories/product.repo')
+    findProduct,
+    updateProductById,
+    deleteProductById } = require('../models/repositories/product.repo')
+const { removeUndefinedObject, updateNestedObjectParser } = require('../utils')
 
 
 //define base product class 
@@ -29,6 +32,13 @@ class Product {
     //create new product
     async createProduct(product_id) {
         return await product.create({ ...this, _id: product_id })
+    }
+
+    async updateProduct(productId, bodyUpdate) {
+        return await updateProductById({ productId, bodyUpdate, model: product })
+    }
+    async deleteProduct(productId) {
+        return await deleteProductById({ productId, model: product })
     }
 }
 
@@ -95,8 +105,24 @@ class ProductFactory {
         })
     }
 
-    static async findProduct({product_id}){
-        return await findProduct({product_id,unSelect:['__v']})
+    static async findProduct({ product_id }) {
+        return await findProduct({ product_id, unSelect: ['__v'] })
+    }
+    static async updateProduct(type, productId, payload) {
+        const productClass = ProductFactory.productRegistry[type]
+        if (!productClass)
+            throw new BadRequestError(`Invalid Product Type ${type}`)
+        return await new productClass(payload).updateProduct(productId)
+    }
+
+
+    //delete 
+    static async deleteProduct(type, productId) {
+        const productClass = ProductFactory.productRegistry[type]
+        if (!productClass) throw new BadRequestError(`Invalid Product Type ${type}`)
+
+        const instance = new productClass({product_type:type})
+        return await instance.deleteProduct(productId)
     }
 }
 
@@ -112,6 +138,27 @@ class Book extends Product {
 
         return newProduct
     }
+
+    async updateProduct(productId) {
+        const objectParams = removeUndefinedObject(this)
+        if (objectParams.product_attributes) {
+            await updateProductById({
+                productId,
+                bodyUpdate: objectParams.product_attributes,
+                model: book
+            })
+        }
+        const updateProduct = await super.updateProduct(productId, objectParams)
+        return updateProduct
+    }
+    async deleteProduct(productId) {
+        const deleteBook = await deleteProductById({ productId, model: book })
+        if (!deleteBook) throw new BadRequestError('Book Not Found!')
+
+        const delProduct = await super.deleteProduct(productId)
+        if (!delProduct) throw new BadRequestError('Product Not Found!')
+        return delProduct
+    }
 }
 
 //define sub-class for different product type = stationery
@@ -126,6 +173,26 @@ class Stationery extends Product {
 
         return newProduct
     }
+    async updateProduct(productId) {
+        const objectParams = removeUndefinedObject(this)
+        if (objectParams.product_attributes) {
+            await updateProductById({
+                productId,
+                bodyUpdate: objectParams.product_attributes,
+                model: stationery
+            })
+        }
+        const updateProduct = await super.updateProduct(productId, updateNestedObjectParser(objectParams))
+        return updateProduct
+    }
+    async deleteProduct(productId) {
+        const deleteStationery = await deleteProductById({ productId, model: stationery })
+        if (!deleteStationery) throw new BadRequestError('Stationery Not Found!')
+
+        const delProduct = await super.deleteProduct(productId)
+        if (!delProduct) throw new BadRequestError('Product Not Found!')
+        return delProduct
+    }
 }
 
 //define sub-class for different product type = gift
@@ -139,6 +206,26 @@ class Gift extends Product {
         if (!newProduct) throw new BadRequestError('Create new Product error!')
 
         return newProduct
+    }
+    async updateProduct(productId) {
+        const objectParams = removeUndefinedObject(this)
+        if (objectParams.product_attributes) {
+            await updateProductById({
+                productId,
+                bodyUpdate: objectParams.product_attributes,
+                model: gift
+            })
+        }
+        const updateProduct = await super.updateProduct(productId, updateNestedObjectParser(objectParams))
+        return updateProduct
+    }
+    async deleteProduct(productId) {
+        const deleteGift = await deleteProductById({ productId, model: gift })
+        if (!deleteGift) throw new BadRequestError('Gift Not Found!')
+
+        const delProduct = await super.deleteProduct(productId)
+        if (!delProduct) throw new BadRequestError('Product Not Found!')
+        return delProduct
     }
 }
 

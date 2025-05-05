@@ -22,6 +22,12 @@ router.use(restrictToAdmin)
 router.post('', asyncHandler(ProductController.createProduct))
 
 //update 
+router.patch('/:productId', asyncHandler(ProductController.updateProduct))
+
+//delete
+router.delete('/:productId', asyncHandler(productController.deleteProduct))
+
+
 router.post('/publish/:id', asyncHandler(ProductController.publishProduct))
 router.post('/unpublish/:id', asyncHandler(ProductController.unpublishProduct))
 
