@@ -2,7 +2,7 @@
 
 const {Types} =require('mongoose')
 const { filter, update } = require("lodash")
-const KeyTokenModel = require("../models/KeyToken.Model") // Import KeyTokenModel để tương tác với collection keyTokens trong MongoDB
+const KeyTokenModel = require("../models/keyToken.model") // Import KeyTokenModel để tương tác với collection keyTokens trong MongoDB
 
 class keyTokenServices { // Định nghĩa class keyTokenServices để chứa các dịch vụ liên quan đến quản lý khóa
     static CreateKeyToken = async ({ userId, publicKey, privateKey,refreshToken }) => { // Định nghĩa phương thức tĩnh CreateKeyToken để tạo và lưu khóa cho người dùng

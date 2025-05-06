@@ -86,6 +86,8 @@ const deleteProductById = async({productId,model})=>{
     return await model.findByIdAndDelete(productId)
 }
 
+
+
 module.exports = {
     findAllDraftsForOrganization,
     findAllPublishForOrganization,

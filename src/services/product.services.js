@@ -13,6 +13,7 @@ const { findAllDraftsForOrganization,
     updateProductById,
     deleteProductById } = require('../models/repositories/product.repo')
 const { removeUndefinedObject, updateNestedObjectParser } = require('../utils')
+const { insertInventory } = require('../models/repositories/inventory.repo')
 
 
 //define base product class 
@@ -31,7 +32,14 @@ class Product {
     }
     //create new product
     async createProduct(product_id) {
-        return await product.create({ ...this, _id: product_id })
+        const newProduct = await product.create({ ...this, _id: product_id })
+        if(newProduct){
+            await insertInventory({
+                productId:newProduct._id,
+                stock:this.product_quantity
+            })
+        }
+        return newProduct
     }
 
     async updateProduct(productId, bodyUpdate) {
@@ -148,7 +156,7 @@ class Book extends Product {
                 model: book
             })
         }
-        const updateProduct = await super.updateProduct(productId, objectParams)
+        const updateProduct = await super.updateProduct(productId, updateNestedObjectParser(objectParams))
         return updateProduct
     }
     async deleteProduct(productId) {

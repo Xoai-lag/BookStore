@@ -1,29 +1,37 @@
-'use strict';
-const mongoose = require('mongoose');
+'use strict'
 
-// Khai báo Schema cho mô hình MongoDB của Inventory (Kho)
-var InventorySchema = new mongoose.Schema({
-    // BookId: Tham chiếu đến mô hình Book (Sách), bắt buộc
-    BookId: {
-        type: String,
-        ref: 'Book',  // tham chiếu đến mô hình 'Book'
-        required: true
+const {model,Schema,Types} = require('mongoose'); // Erase if already required
+
+const DOCUMENT_NAME='Inventory'
+const COLLECTION_NAME='Inventories'
+
+// Declare the Schema of the Mongo model
+var InventorySchema = new Schema({
+    inven_productId:{
+        type:Schema.Types.ObjectId,
+        ref:'Product'
     },
-    
-    // AvailableQuantity: Số lượng sách có sẵn trong kho, phải là một số không âm, mặc định là 0
-    AvailableQuantity: {
-        type: Number,
-        min: 0,
-        default: 0
+    inven_location:{
+        type:String,
+        default:'unKnow',
     },
-    
-    // MinThreshold: Ngưỡng tối thiểu số lượng sách cần có trong kho, phải là một số không âm, mặc định là 0
-    MinThreshold: {
-        type: Number,
-        min: 0,
-        default: 0
+    inven_stock:{
+        type:Number,
+        required:true,
+    },
+    inven_reservations:{
+        type:Array,
+        default:[]
     }
-}, { timestamps: true });  // Tự động thêm các trường 'createdAt' và 'updatedAt'
+    /*
+        cartId:,
+        stock:1,
+        createOn:
+    */
+},{
+    timestamps:true,
+    collection:COLLECTION_NAME
+});
 
-// Xuất mô hình để sử dụng ở các phần khác trong ứng dụng
-module.exports = mongoose.model('Inventory', InventorySchema);
+//Export the model
+module.exports = model(DOCUMENT_NAME, InventorySchema);
