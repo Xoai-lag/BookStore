@@ -7,6 +7,11 @@ const express = require('express')
 const router = express.Router();
 const asyncHandler = require('../../helpers/asyncHandler')
 
+//get amount a discount
+router.post('/amount', asyncHandler(DiscountController.getDiscountAmount))
+router.get('/list_product_code', asyncHandler(DiscountController.getAllDiscountCodesWithProduct))
+
+
 router.use(preAuthentication)
 router.use(authenticationV1)
 router.use(restrictToAdmin)
@@ -16,9 +21,9 @@ router.post('', asyncHandler(DiscountController.createDiscountCode))
 router.post('/update/:discountId', asyncHandler(DiscountController.updateDiscountCode))
 
 
-//getAllDiscount
 
-router.get('/getAllDiscountCodes', asyncHandler(DiscountController.getAllDiscountsByShop))
-router.get('/getDiscountCodesWithProduct/:code', asyncHandler(DiscountController.getAllDiscountCodesWithProduct))
+//getAllDiscount
+router.get('', asyncHandler(DiscountController.getAllDiscountsByShop))
+
 
 module.exports = router

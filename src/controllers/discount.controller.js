@@ -27,8 +27,7 @@ class DiscountController {
         new SuccessResponse({
             message: 'Get All DiscountCode Success',
             metadata: await DiscountServices.getAllDiscountCodesByShop({
-                limit: 50,
-                page: 1
+                ...req.query
             })
         }).send(res)
     }
@@ -36,9 +35,16 @@ class DiscountController {
         new SuccessResponse({
             message: 'Get All DiscountCode Success',
             metadata: await DiscountServices.getAllDiscountCodesWithProduct({
-                code: req.params.code,
-                limit: 50,
-                page: 1
+              ...req.query
+            })
+        }).send(res)
+    }
+
+    getDiscountAmount = async(req,res,next)=>{
+        new SuccessResponse({
+            message: 'Get DiscountCode Amount Success',
+            metadata: await DiscountServices.getDiscountAmount({
+                ...req.body
             })
         }).send(res)
     }
