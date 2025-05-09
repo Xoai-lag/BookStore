@@ -4,6 +4,7 @@ const { NotFoundError } = require("../core/error.response")
 const {cart} = require("../models/cart.Model")
 const {createUserCart, updateCartQuantity}= require('../models/repositories/cart.repo')
 const { getProductById } = require("../models/repositories/product.repo")
+const { convertToObjectIdMongodb } = require("../utils")
 
 /*
 
@@ -67,10 +68,15 @@ class cartService{
             }
         ]
     */
-    static async addToCartV2({userId,shop_order_ids}){
-        const {productId,quantity,old_quantity}= shop_order_ids[0]?.item_products[0]
-        const foundProduct = await getProductById(productId)
+    static async addToCartV2({userId,shop_order}){
 
+        const {item_products}= shop_order
+
+        const {productId,quantity,old_quantity} = item_products[0]
+
+        console.log(productId,quantity,old_quantity,shop_order)
+
+        const foundProduct = await getProductById(productId)
         if(!foundProduct) throw new NotFoundError(`Product Not Exists`)
 
         if(quantity ===0 ){
