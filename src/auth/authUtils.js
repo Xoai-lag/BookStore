@@ -1,3 +1,6 @@
+//authentication (xác thực)
+
+
 'use strict' // Kích hoạt chế độ strict mode để tăng tính an toàn và giảm lỗi trong JavaScript
 
 

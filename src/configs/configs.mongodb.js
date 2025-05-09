@@ -1,3 +1,6 @@
+//cấu hình
+
+
 'use strict'
 
 // Cấu hình cho môi trường phát triển (dev)

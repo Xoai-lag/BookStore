@@ -1,6 +1,11 @@
+// utility (tiện ích)
+
+
 'use strict'
 
 const _ = require('lodash')
+const { default: mongoose } = require('mongoose')
+const { BadRequestError } = require('../core/error.response')
 const getInfoData = ({ fields = [], object = {} }) => {
     return _.pick(object, fields)
 }
@@ -42,11 +47,20 @@ const updateNestedObjectParser = obj => {
 
     return final
 }
+
+const convertToObjectIdMongodb = (id)=>{
+    if(mongoose.Types.ObjectId.isValid(id)){
+        return new mongoose.Types.ObjectId(id)
+    }
+    throw new BadRequestError('Invalid ObjectId format');
+}
+
 module.exports = {
     getInfoData,
     getSelectData,
     unGetSelectData,
     removeUndefinedObject,
-    updateNestedObjectParser
+    updateNestedObjectParser,
+    convertToObjectIdMongodb
 }
 

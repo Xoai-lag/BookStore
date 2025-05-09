@@ -1,7 +1,10 @@
+//(kho mã nguồn)
+
+
 'use strict'
 
 const { product } = require('../Product.Model')
-const { getSelectData, unGetSelectData } = require('../../utils/index')
+const { getSelectData, unGetSelectData, convertToObjectIdMongodb } = require('../../utils/index')
 const { model } = require('mongoose')
 
 const findAllDraftsForOrganization = async (query, limit, skip) => {
@@ -86,6 +89,9 @@ const deleteProductById = async({productId,model})=>{
     return await model.findByIdAndDelete(productId)
 }
 
+const getProductById = async(productId)=>{
+    return await product.findOne({_id:convertToObjectIdMongodb(productId)}).lean()
+}
 
 
 module.exports = {
@@ -97,5 +103,6 @@ module.exports = {
     findAllProducts,
     findProduct,
     updateProductById,
-    deleteProductById
+    deleteProductById,
+    getProductById
 }

@@ -1,3 +1,7 @@
+// mô hình dữ liệu 
+
+
+
 'use strict'
 
 const {model,Schema,Types} = require('mongoose'); // Erase if already required
