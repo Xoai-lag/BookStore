@@ -31,9 +31,18 @@ class cartService{
             return await createUserCart({userId,product})
         }
 
+
+
         // nếu có giỏ hàng nhưng chưa có sản phẩm 
         if(!userCart.cart_products.length){
             userCart.cart_products = [product]
+            return await userCart.save()
+        }
+
+        const foundProduct = userCart.cart_products.find(id=>id.productId.toString()=== product.productId.toString())
+
+        if(!foundProduct){
+            userCart.cart_products.push(product)
             return await userCart.save()
         }
 
