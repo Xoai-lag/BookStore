@@ -23,13 +23,14 @@ class cartService{
     static async addToCart({
         userId, product={}
     }){
+        const userIdObject = await convertToObjectIdMongodb(userId)
         const userCart= await cart.findOne({
-            cart_userId:userId
+            cart_userId:userIdObject
         })
 
         // nếu chưa có giỏ hàng 
         if(!userCart) {
-            return await createUserCart({userId,product})
+            return await createUserCart({userId:userIdObject,product})
         }
 
 
@@ -48,7 +49,7 @@ class cartService{
         }
 
         // nếu giỏ hàng đã tồn tại rồi và sản phẩm đã có trong giỏ hàng rồi 
-        return await updateCartQuantity({userId,product})
+        return await updateCartQuantity({userId:userIdObject,product})
 
     }
 
@@ -70,21 +71,21 @@ class cartService{
     */
     static async addToCartV2({userId,shop_order}){
 
+        const userIdObject = convertToObjectIdMongodb(userId)
+
         const {item_products}= shop_order
 
         const {productId,quantity,old_quantity} = item_products[0]
-
-        console.log(productId,quantity,old_quantity,shop_order)
 
         const foundProduct = await getProductById(productId)
         if(!foundProduct) throw new NotFoundError(`Product Not Exists`)
 
         if(quantity ===0 ){
-            return await this.deleteUserCart({userId,productId})
+            return await this.deleteUserCart({userId:userIdObject,productId})
         }
 
         return await updateCartQuantity({
-            userId,
+            userId:userIdObject,
             product:{
                 productId,
                 quantity: quantity - old_quantity
@@ -112,8 +113,9 @@ class cartService{
     }
 
     static async getListUserCart({userId}){
+        const userIdObject=convertToObjectIdMongodb(userId)
         return await cart.findOne({
-            cart_userId:+userId
+            cart_userId:userIdObject
         }).lean()
     }
 }

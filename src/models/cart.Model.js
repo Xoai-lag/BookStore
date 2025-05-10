@@ -2,6 +2,7 @@
 
 
 const { model, Schema } = require('mongoose'); // Erase if already required
+const { schema } = require('./discount.Model');
 
 const DOCUMENT_NAME = 'Cart'
 const COLLECTION_NAME = 'Carts'
@@ -29,7 +30,7 @@ var cartSchema = new Schema({
         type: Number,
         default: 0
     },
-    cart_userId: { type: Number, required: true }
+    cart_userId: { type: Schema.Types.ObjectId , required: true, ref:'Customer' }
 }, {
     timestamps: true,
     collection: COLLECTION_NAME
