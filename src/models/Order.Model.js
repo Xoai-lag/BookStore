@@ -1,35 +1,67 @@
-'use strict';
-const mongoose = require('mongoose');
+'use strict'
 
-// Khai báo Schema cho mô hình MongoDB của Order (Đơn hàng)
-var OrderSchema = new mongoose.Schema({  
-    // OrderDate: Ngày đặt hàng, mặc định là ngày hiện tại
-    OrderDate: {
-        type: Date,
-        default: Date.now
+const { model, Schema } = require('mongoose'); // Erase if already required
+
+const DOCUMENT_NAME = 'Order'
+const COLLECTION_NAME = 'Orders'
+
+// Declare the Schema of the Mongo model
+var OrderSchema = new Schema({
+    order_userId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: 'Customer'
     },
-    
-    // Status: Trạng thái của đơn hàng, có thể là 'pending' (đang chờ), 'completed' (hoàn thành), hoặc 'cancelled' (bị hủy)
-    Status: {
-        type: String,
-        enum: ['pending', 'completed', 'cancelled'],
-        default: 'pending'  // Trạng thái mặc định là 'pending'
+    order_checkout: {
+        type: Object,
+        default: {},
     },
-    
-    // TotalAmount: Tổng giá trị của đơn hàng, phải là một số không âm, mặc định là 0
-    TotalAmount: {
-        type: Number,
-        min: 0,
-        default: 0
+    /*
+        order_checkout:{
+            totalPrice,
+            totalDiscount,
+            feeship,
+            totalCheckout
+        }
+    */
+    order_shipping: {
+        type: Object,
+        default: {},
     },
-    
-    // CustomerId: Tham chiếu đến mô hình Customer (Khách hàng), bắt buộc
-    CustomerId: {
-        type: String,
-        ref: 'Customer',  // tham chiếu đến mô hình 'Customer'
+    /*
+     order_shipping:{
+         street,
+         city,
+         state,
+         country
+     }
+ */
+    order_payment: {
+        type: Object,
+        default: {},
+    },
+    order_products: {
+        type: Array,
         required: true
+    },
+    order_trackingNumber: {
+        type: String,
+        default: '#0000111052025'
+    },
+    order_status: {
+        type: String,
+        enum: ['pending', 'confirmed', 'shipped', 'cancelled', 'delivered'],
+        // pending đơn hàng được tạo đang chờ xữ lí ; 
+        // confirmed đơn hàng đươc xữ lí và xác nhận 
+        // shipped đơn hàng đã được vận chuyển trên đường đến tay người dùng
+        // cancelled đơn hàng bị hủy 
+        // delivered đơn hàng đã được giao 
+        default: 'pending'
     }
-}, { timestamps: true });  // Tự động thêm các trường 'createdAt' và 'updatedAt'
+}, {
+    timestamps: true,
+    collection: COLLECTION_NAME
+});
 
-// Xuất mô hình để sử dụng ở các phần khác trong ứng dụng
-module.exports = mongoose.model('Order', OrderSchema);
+//Export the model
+module.exports = model(DOCUMENT_NAME, OrderSchema);

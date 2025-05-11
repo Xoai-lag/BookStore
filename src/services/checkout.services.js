@@ -5,6 +5,10 @@ const { findCartById } = require("../models/repositories/cart.repo")
 const { checkProductByServer } = require("../models/repositories/product.repo")
 const { convertToObjectIdMongodb } = require("../utils")
 const { getDiscountAmount } = require("./discount.services")
+const { acquireLock, releaseLock } = require("./redis.services")
+const order = require('../models/Order.Model')
+const { deleteUserCart } = require("./cart.services")
+const mongoose = require('mongoose')
 
 class CheckoutService {
     //login and without login
@@ -49,11 +53,19 @@ class CheckoutService {
 
         const { shop_discount = [], item_products = [] } = shop_order
 
+
+        for (const product of item_products) {
+            if (!product.productId || !mongoose.Types.ObjectId.isValid(product.productId)) {
+                throw new BadRequestError(`productId không hợp lệ: ${product.productId}`);
+            }
+        }
+
         // check product available 
         const checkProductServer = await checkProductByServer(item_products)
 
-        if (!checkProductServer[0]) throw new BadRequestError('order wrong!!!')
+        if (!checkProductServer || checkProductServer.length === 0)  throw new BadRequestError('order wrong!!!')
 
+        
         // tổng tiền đơn hàng chưa tính giảm giá 
 
         const checkoutPrice = checkProductServer.reduce((acc, product) => {
@@ -67,20 +79,105 @@ class CheckoutService {
             for (const discountItem of shop_discount) {
                 const { totalPrice = 0, discount: amount = 0 } = await getDiscountAmount({
                     codeId: discountItem.codeId,
-                    userId:userId,
+                    userId: userId,
                     products: checkProductServer,
                 });
                 checkout_order.totalDiscount += amount;  // Tích lũy tổng tiền giảm giá từ các mã
-                
+
             }
         }
 
-        checkout_order.totalCheckout = Math.max(0, checkout_order.totalPrice  - checkout_order.totalDiscount)
+        checkout_order.totalCheckout = Math.max(0, checkout_order.totalPrice - checkout_order.totalDiscount)
 
         return {
             shop_order,
-            checkout_order
+            checkout_order,
+            checkProductServer
         }
+    }
+
+
+    static async orderByUser({
+        shop_order, cartId, userId, user_address = {}, user_payment = {}
+    }) {
+        const { checkout_order, checkProductServer } = await CheckoutService.checkoutReview({
+            cartId, userId, shop_order
+        })
+        // check inventory
+        const acquireProduct = []
+        for (let i = 0; i < checkProductServer.length; i++) {
+
+            const { productId, quantity } = checkProductServer[i]
+            console.log(productId+'Voi so luong la: '+quantity)
+            const keyLock = await acquireLock(productId, cartId, quantity)
+
+            acquireProduct.push(keyLock ? true : false)
+
+            if (keyLock) {
+                await releaseLock(keyLock)
+            }
+        }
+
+        // check nếu có 1 sản phẩm hết hàng trong kho 
+        if (acquireProduct.includes(false)) {
+            throw new BadRequestError('Some Products In Your Cart Are Out Of Stock!')
+        }
+
+        const newOrder = await order.create({
+            order_userId: userId,
+            order_checkout: checkout_order,
+            order_shipping: user_address,
+            order_payment: user_payment,
+            order_products: checkProductServer
+        })
+
+        // nếu insert thành công thì remove products trong cart
+
+        if (newOrder) {
+            // remove products in my cart 
+            for (let i = 0; i < checkProductServer.length; i++) {
+                const { productId } = checkProductServer[i]
+
+                const delProductInCart = await deleteUserCart({ userId, productId })
+                if (!delProductInCart)
+                    throw new BadRequestError('Delete A Product In Cart Error!')
+            }
+        }
+        return newOrder
+    }
+
+
+    /*
+        query order [user]
+    */
+    static async getOrdersByUser({
+
+    }) {
+
+    }
+    /*
+        query order using id  [user]
+    */
+    static async getOneOrderByUser({
+
+    }) {
+
+    }
+    /*
+        cancel order [user]
+    */
+    static async cancelOrderByUser({
+
+    }) {
+
+    }
+    /*
+        update order [admin]
+    */
+    static async updateOrderStatusByAdmin({
+
+    }) {
+
     }
 }
 
