@@ -22,12 +22,16 @@ var InventorySchema = new Schema({
     inven_reservations:{
         type:Array,
         default:[]
-    }
+    },
     /*
         cartId:,
         stock:1,
         createOn:
     */
+    inven_returnLogs:{
+        type:Array,
+        default:[]
+    }
 },{
     timestamps:true,
     collection:COLLECTION_NAME

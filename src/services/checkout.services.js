@@ -1,6 +1,6 @@
 'use strict'
 
-const { BadRequestError } = require("../core/error.response")
+const { BadRequestError, NotFoundError } = require("../core/error.response")
 const { findCartById } = require("../models/repositories/cart.repo")
 const { checkProductByServer } = require("../models/repositories/product.repo")
 const { convertToObjectIdMongodb } = require("../utils")
@@ -9,7 +9,8 @@ const { acquireLock, releaseLock } = require("./redis.services")
 const order = require('../models/Order.Model')
 const { deleteUserCart } = require("./cart.services")
 const mongoose = require('mongoose')
-const { getAllOrderByUser,getOneOrderByUser } = require("../models/repositories/checkout.repo")
+const { getAllOrderByUser, getOneOrderByUser, findOrderById, updateOrder } = require("../models/repositories/checkout.repo")
+const { findByUserId } = require("./customer.services")
 
 class CheckoutService {
     //login and without login
@@ -64,9 +65,9 @@ class CheckoutService {
         // check product available 
         const checkProductServer = await checkProductByServer(item_products)
 
-        if (!checkProductServer || checkProductServer.length === 0)  throw new BadRequestError('order wrong!!!')
+        if (!checkProductServer || checkProductServer.length === 0) throw new BadRequestError('order wrong!!!')
 
-        
+
         // tổng tiền đơn hàng chưa tính giảm giá 
 
         const checkoutPrice = checkProductServer.reduce((acc, product) => {
@@ -106,11 +107,17 @@ class CheckoutService {
         })
         // check inventory
         const acquireProduct = []
+        const method='reservation'
         for (let i = 0; i < checkProductServer.length; i++) {
 
             const { productId, quantity } = checkProductServer[i]
-            console.log(productId+'Voi so luong la: '+quantity)
-            const keyLock = await acquireLock(productId, cartId, quantity)
+
+            const keyLock = await acquireLock({
+                productId:productId,
+                cartId:cartId,
+                quantity:quantity,
+                method:method
+            })
 
             acquireProduct.push(keyLock ? true : false)
 
@@ -152,41 +159,96 @@ class CheckoutService {
         query order [user]
     */
     static async getOrdersByUser({
-        userId,sort='ctime'
+        userId, sort = 'ctime'
     }) {
         const userIdObject = convertToObjectIdMongodb(userId)
-       const filter = {
-            order_userId:userIdObject
-       }
-       return await getAllOrderByUser({
-            filter,sort,
-            select:['order_checkout','order_products','order_status']
-       })
+        const filter = {
+            order_userId: userIdObject
+        }
+        return await getAllOrderByUser({
+            filter, sort,
+            select: ['order_checkout', 'order_products', 'order_status']
+        })
     }
     /*
         query order using id  [user]
     */
     static async getOneOrderByUser({
-        userId,orderId
+        userId, orderId
     }) {
-        const userIdObject= convertToObjectIdMongodb(userId)
+        const userIdObject = convertToObjectIdMongodb(userId)
         const orderIdObject = convertToObjectIdMongodb(orderId)
-        const filter ={
-            order_userId:userIdObject,
-            _id:orderIdObject
+        const filter = {
+            order_userId: userIdObject,
+            _id: orderIdObject
         }
         return await getOneOrderByUser({
             filter,
-            select:['order_checkout','order_products','order_status','order_shipping','order_payment','order_trackingNumber']
+            select: ['order_checkout', 'order_products', 'order_status', 'order_shipping', 'order_payment', 'order_trackingNumber']
         })
     }
     /*
         cancel order [user]
     */
     static async cancelOrderByUser({
-
+        userId, orderId
     }) {
 
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+            throw new BadRequestError('orderId không hợp lệ');
+        }
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            throw new BadRequestError('userId không hợp lệ');
+        }
+        const orderIdObject = convertToObjectIdMongodb(orderId)
+        const userIdObject = convertToObjectIdMongodb(userId)
+
+
+
+        const foundOrder = await findOrderById({
+            orderId: orderIdObject,
+            userId: userIdObject
+        })
+
+        if (!foundOrder)
+            throw new NotFoundError('Order Not Found!')
+
+        const { order_status , order_products} = foundOrder
+
+        if (!['pending', 'confirmed'].includes(order_status)) {
+            throw new BadRequestError('This Order Can Not Be Cancelled!')
+        }
+
+        const acquireProduct=[]
+        const method ='increasestock'
+        for (let i = 0; i < order_products.length; i++) {
+             const {productId,quantity}=order_products[i]
+            
+             const keyLock = await acquireLock({
+                method:method,
+                productId:productId,
+                quantity:quantity,
+                orderId:orderId
+             })
+
+            acquireProduct.push(keyLock?true:false)
+            if(keyLock){
+                await releaseLock(keyLock)
+            } 
+        }
+        if (acquireProduct.includes(false)) {
+            throw new BadRequestError('Failed to restore stock for some products!')
+        }
+
+        const query = {
+            _id: orderIdObject,
+            order_userId: userIdObject
+        }, updateSet={
+            $set:{order_status:'cancelled'},
+            $currentDate: {updatedAt:true}
+        },options={new:true}
+
+        return  await updateOrder({query,updateSet,options})
     }
     /*
         update order [admin]

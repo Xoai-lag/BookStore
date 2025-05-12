@@ -2,7 +2,7 @@
 // đoạn này phải cài redis : https://github.com/microsoftarchive/redis/releases
 const { resolve } = require('path')
 const redis = require('redis') // dùng thư viện lưu trữ redis kiểu key-value 
-const { reservationInventory } = require('../models/repositories/inventory.repo')
+const { reservationInventory, increasestock } = require('../models/repositories/inventory.repo')
 const redisClient = redis.createClient()
 
 // kết nối với redis bắt buộc với redis V5
@@ -20,10 +20,9 @@ redisClient.on('error', err => console.error('Redis Client Error:', err))
 
 // Không cần promisify, các lệnh đã là Promise trong v5
 
-const acquireLock = async (productId, cartId, quantity) => {
+const acquireLock = async ({ productId, cartId, quantity, method,orderId }) => {
     const key = `lock_v2025_${productId}` //tạo tên khóa key 
 
-    console.log('So luong duoc truyen vao acquireLock: '+quantity)
     // cho phép thử lại 10 lần 
     const retryTime = 10;
 
@@ -62,13 +61,23 @@ const acquireLock = async (productId, cartId, quantity) => {
             await redisClient.pExpire(key, expireTime)
 
             // thao tác với inventory 
-            const isReservation = await reservationInventory({productId, quantity, cartId})
-
-            if (isReservation.modifiedCount) {
-                return key;
-            } else {
-                await releaseLock(key);
-                return null;
+            if (method === 'reservation') {
+                const isReservation = await reservationInventory({ productId, quantity, cartId })
+                if (isReservation.modifiedCount) {
+                    return key;
+                } else {
+                    await releaseLock(key);
+                    return null;
+                }
+            }
+            if (method === 'increasestock') {
+                const isIncrease = await increasestock({ productId, quantity, orderId })
+                if (isIncrease.modifiedCount) {
+                    return key
+                } else {
+                    await releaseLock(key);
+                    return null;
+                }
             }
         } else {
             await new Promise((resolve) => setTimeout(resolve, retryDelay)) // chờ 50 giây trước khi tiếp tục dòng for 

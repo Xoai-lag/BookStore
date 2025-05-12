@@ -1,5 +1,6 @@
 'use strict'
 
+const { options } = require('../../routers/checkout')
 const { getSelectData } = require('../../utils')
 const order = require('../Order.Model')
 
@@ -18,8 +19,20 @@ const getOneOrderByUser = async({filter,select})=>{
     lean()
 }
 
+const findOrderById = async ({orderId,userId})=>{
+    return await order.findOne({
+        _id:orderId,
+        order_userId:userId
+    }).lean()
+}
+
+const updateOrder = async ({query,updateSet,options})=>{
+    return await order.updateOne(query,updateSet,options)
+}
 
 module.exports={
     getAllOrderByUser,
-    getOneOrderByUser
+    getOneOrderByUser,
+    findOrderById,
+    updateOrder
 }

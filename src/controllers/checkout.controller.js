@@ -32,6 +32,14 @@ class CheckoutController{
                 orderId:req.params.orderId,
                 userId:req.body.userId})
         }).send(res)
+    } 
+    cancelOrderByUser = async(req,res,next)=>{
+        new SuccessResponse({
+            message:'Cancel Order By User Success!',
+            metadata: await CheckoutService.cancelOrderByUser({
+                orderId:req.params.orderId,
+                userId:req.body.userId})
+        }).send(res)
     }
 }
 

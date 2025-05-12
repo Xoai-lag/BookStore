@@ -10,6 +10,7 @@ const asyncHandler = require('../../helpers/asyncHandler')
 router.use(preAuthentication)
 router.use(authenticationV1)
 
+router.post('/cancel/:orderId', asyncHandler(CheckoutController.cancelOrderByUser))
 router.post('/review', asyncHandler(CheckoutController.checkoutReview))
 router.post('/order', asyncHandler(CheckoutController.orderByUser))
 router.get('', asyncHandler(CheckoutController.getOrdersByUser))
