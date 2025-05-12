@@ -9,6 +9,7 @@ const { acquireLock, releaseLock } = require("./redis.services")
 const order = require('../models/Order.Model')
 const { deleteUserCart } = require("./cart.services")
 const mongoose = require('mongoose')
+const { getAllOrderByUser } = require("../models/repositories/checkout.repo")
 
 class CheckoutService {
     //login and without login
@@ -151,15 +152,22 @@ class CheckoutService {
         query order [user]
     */
     static async getOrdersByUser({
-
+        userId,sort='ctime'
     }) {
-
+        const userIdObject = convertToObjectIdMongodb(userId)
+       const filter = {
+            order_userId:userIdObject
+       }
+       return await getAllOrderByUser({
+            filter,sort,
+            select:['order_checkout','order_shipping','order_payment','order_products','order_status']
+       })
     }
     /*
         query order using id  [user]
     */
     static async getOneOrderByUser({
-
+        
     }) {
 
     }
