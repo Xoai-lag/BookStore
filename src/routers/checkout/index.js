@@ -13,6 +13,7 @@ router.use(authenticationV1)
 router.post('/review', asyncHandler(CheckoutController.checkoutReview))
 router.post('/order', asyncHandler(CheckoutController.orderByUser))
 router.get('', asyncHandler(CheckoutController.getOrdersByUser))
+router.get('/:orderId', asyncHandler(CheckoutController.getOneOrdersByUser))
 
 
 router.use(restrictToAdmin)

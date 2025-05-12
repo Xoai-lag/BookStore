@@ -12,8 +12,14 @@ const getAllOrderByUser = async({sort,filter,select})=>{
     lean()
 }
 
+const getOneOrderByUser = async({filter,select})=>{
+    return await order.findOne(filter).
+    select(getSelectData(select)).
+    lean()
+}
 
 
 module.exports={
-    getAllOrderByUser
+    getAllOrderByUser,
+    getOneOrderByUser
 }

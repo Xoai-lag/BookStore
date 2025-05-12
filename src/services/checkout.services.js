@@ -9,7 +9,7 @@ const { acquireLock, releaseLock } = require("./redis.services")
 const order = require('../models/Order.Model')
 const { deleteUserCart } = require("./cart.services")
 const mongoose = require('mongoose')
-const { getAllOrderByUser } = require("../models/repositories/checkout.repo")
+const { getAllOrderByUser,getOneOrderByUser } = require("../models/repositories/checkout.repo")
 
 class CheckoutService {
     //login and without login
@@ -160,16 +160,25 @@ class CheckoutService {
        }
        return await getAllOrderByUser({
             filter,sort,
-            select:['order_checkout','order_shipping','order_payment','order_products','order_status']
+            select:['order_checkout','order_products','order_status']
        })
     }
     /*
         query order using id  [user]
     */
     static async getOneOrderByUser({
-        
+        userId,orderId
     }) {
-
+        const userIdObject= convertToObjectIdMongodb(userId)
+        const orderIdObject = convertToObjectIdMongodb(orderId)
+        const filter ={
+            order_userId:userIdObject,
+            _id:orderIdObject
+        }
+        return await getOneOrderByUser({
+            filter,
+            select:['order_checkout','order_products','order_status','order_shipping','order_payment','order_trackingNumber']
+        })
     }
     /*
         cancel order [user]

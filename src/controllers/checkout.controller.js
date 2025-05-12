@@ -25,6 +25,14 @@ class CheckoutController{
             metadata: await CheckoutService.getOrdersByUser(req.body)
         }).send(res)
     }
+    getOneOrdersByUser= async(req,res,next)=>{
+        new SuccessResponse({
+            message:'Get Order Of User Success!',
+            metadata: await CheckoutService.getOneOrderByUser({
+                orderId:req.params.orderId,
+                userId:req.body.userId})
+        }).send(res)
+    }
 }
 
 module.exports = new CheckoutController()
