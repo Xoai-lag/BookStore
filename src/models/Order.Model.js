@@ -57,6 +57,10 @@ var OrderSchema = new Schema({
         // cancelled đơn hàng bị hủy 
         // delivered đơn hàng đã được giao 
         default: 'pending'
+    },
+    order_statusHistory:{
+        type:Array,
+        default:[]
     }
 }, {
     timestamps: true,

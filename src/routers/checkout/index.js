@@ -6,6 +6,7 @@ const CheckoutController = require('../../controllers/checkout.controller')
 const express = require('express')
 const router = express.Router();
 const asyncHandler = require('../../helpers/asyncHandler')
+const checkoutController = require('../../controllers/checkout.controller')
 
 router.use(preAuthentication)
 router.use(authenticationV1)
@@ -18,6 +19,8 @@ router.get('/:orderId', asyncHandler(CheckoutController.getOneOrdersByUser))
 
 
 router.use(restrictToAdmin)
+
+router.post('/updateStatus',asyncHandler(checkoutController.updateStatusOrderByAdmin))
 
 
 

@@ -41,6 +41,13 @@ class CheckoutController{
                 userId:req.body.userId})
         }).send(res)
     }
+    updateStatusOrderByAdmin = async(req,res,next)=>{
+        const {orderId, targetStatus}=req.body
+        new SuccessResponse({
+            message:'Update Status Order Success!',
+            metadata: await CheckoutService.updateOrderStatusByAdmin(orderId, targetStatus)
+        }).send(res)
+    }
 }
 
 module.exports = new CheckoutController()

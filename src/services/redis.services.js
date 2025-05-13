@@ -13,14 +13,13 @@ redisClient.connect().catch(err => console.error('Redis Client Connection Error:
 redisClient.on('error', err => console.error('Redis Client Error:', err))
 
 
-
 // Chuyển các hàm pexpire và setnx của redisclient sang async gắn .bind(redisClient) vào để chắc chắn biến this sau khi
 // chuyển đổi hàm từ callback sang promise sẽ luôn chính xác ở V4 phải làm 
 
 
 // Không cần promisify, các lệnh đã là Promise trong v5
 
-const acquireLock = async ({ productId, cartId, quantity, method,orderId }) => {
+const acquireLock = async ({ productId, cartId, quantity, method, orderId }) => {
     const key = `lock_v2025_${productId}` //tạo tên khóa key 
 
     // cho phép thử lại 10 lần 

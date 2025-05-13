@@ -11,6 +11,8 @@ const { deleteUserCart } = require("./cart.services")
 const mongoose = require('mongoose')
 const { getAllOrderByUser, getOneOrderByUser, findOrderById, updateOrder } = require("../models/repositories/checkout.repo")
 const { findByUserId } = require("./customer.services")
+const orderStatusQueue = require('../queues/orderStatus.queue');
+const OrderModel = require("../models/Order.Model")
 
 class CheckoutService {
     //login and without login
@@ -107,16 +109,16 @@ class CheckoutService {
         })
         // check inventory
         const acquireProduct = []
-        const method='reservation'
+        const method = 'reservation'
         for (let i = 0; i < checkProductServer.length; i++) {
 
             const { productId, quantity } = checkProductServer[i]
 
             const keyLock = await acquireLock({
-                productId:productId,
-                cartId:cartId,
-                quantity:quantity,
-                method:method
+                productId: productId,
+                cartId: cartId,
+                quantity: quantity,
+                method: method
             })
 
             acquireProduct.push(keyLock ? true : false)
@@ -136,7 +138,8 @@ class CheckoutService {
             order_checkout: checkout_order,
             order_shipping: user_address,
             order_payment: user_payment,
-            order_products: checkProductServer
+            order_products: checkProductServer,
+            order_status: 'confirmed'
         })
 
         // nếu insert thành công thì remove products trong cart
@@ -150,6 +153,13 @@ class CheckoutService {
                 if (!delProductInCart)
                     throw new BadRequestError('Delete A Product In Cart Error!')
             }
+            // Thêm đơn hàng vào hàng đợi sau 10 giây sẽ chuyển trạng thái sang shipped 
+            await orderStatusQueue.add({
+                orderId: newOrder._id.toString(),
+                targetStatus: 'shipped'
+            }, {
+                delay: 10000
+            });
         }
         return newOrder
     }
@@ -213,28 +223,28 @@ class CheckoutService {
         if (!foundOrder)
             throw new NotFoundError('Order Not Found!')
 
-        const { order_status , order_products} = foundOrder
+        const { order_status, order_products } = foundOrder
 
         if (!['pending', 'confirmed'].includes(order_status)) {
             throw new BadRequestError('This Order Can Not Be Cancelled!')
         }
 
-        const acquireProduct=[]
-        const method ='increasestock'
+        const acquireProduct = []
+        const method = 'increasestock'
         for (let i = 0; i < order_products.length; i++) {
-             const {productId,quantity}=order_products[i]
-            
-             const keyLock = await acquireLock({
-                method:method,
-                productId:productId,
-                quantity:quantity,
-                orderId:orderId
-             })
+            const { productId, quantity } = order_products[i]
 
-            acquireProduct.push(keyLock?true:false)
-            if(keyLock){
+            const keyLock = await acquireLock({
+                method: method,
+                productId: productId,
+                quantity: quantity,
+                orderId: orderId
+            })
+
+            acquireProduct.push(keyLock ? true : false)
+            if (keyLock) {
                 await releaseLock(keyLock)
-            } 
+            }
         }
         if (acquireProduct.includes(false)) {
             throw new BadRequestError('Failed to restore stock for some products!')
@@ -243,20 +253,55 @@ class CheckoutService {
         const query = {
             _id: orderIdObject,
             order_userId: userIdObject
-        }, updateSet={
-            $set:{order_status:'cancelled'},
-            $currentDate: {updatedAt:true}
-        },options={new:true}
+        }, updateSet = {
+            $set: { order_status: 'cancelled' },
+            $currentDate: { updatedAt: true }
+        }, options = { new: true }
 
-        return  await updateOrder({query,updateSet,options})
+        return await updateOrder({ query, updateSet, options })
     }
     /*
         update order [admin]
     */
-    static async updateOrderStatusByAdmin({
 
-    }) {
+    static async updateOrderStatusByAdmin(orderId, targetStatus) {
 
+        const orderIdObject = await convertToObjectIdMongodb(orderId)
+        
+        const currentOrder = await OrderModel.findById(orderId).lean()
+
+        if (!currentOrder) throw new NotFoundError('Order Not Found!');
+
+        // lấy trang thái của đơn hàng hiện tại 
+        const currentStatus = currentOrder.order_status;
+
+        const allowedTransitions = {
+            pending: ['confirmed', 'cancelled'],
+            confirmed: ['shipped', 'cancelled'],
+            shipped: ['delivered'],
+            delivered: [],
+            cancelled: []
+        };
+
+        if (!allowedTransitions[currentStatus]?.includes(targetStatus)) {
+            throw new BadRequestError(`Không thể chuyển trạng thái từ ${currentStatus} sang ${targetStatus}`);
+        }
+
+        const query = {
+            _id: orderIdObject,
+            order_status: currentStatus
+        }, updateSet = {
+            $set: { order_status: targetStatus },
+            $currentDate: { updatedAt: true }
+        }, options = { new: true };
+
+        const result = await updateOrder({ query, updateSet, options });
+
+        if (!result?.modifiedCount) {
+            throw new BadRequestError('Cập nhật trạng thái thất bại');
+        }
+
+        return result;
     }
 }
 
