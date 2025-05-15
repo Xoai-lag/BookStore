@@ -60,16 +60,16 @@ class AccessServices { // Định nghĩa class AccessServices để chứa các 
     step 4- generate tokens 
     step 5- get data return login
     */
-    static login = async ({email,password,refreshToken=null})=>{
+    static login = async ({Email,Password,refreshToken=null})=>{
         try {
             //1
-            const foundcustomer=await findByEmail({email})
+            const foundcustomer=await findByEmail({Email})
             if(!foundcustomer){
                 throw new BadRequestError('Error: Email not found!')
             }
 
             //2
-            const match = bcrypt.compare(password,foundcustomer.Password)
+            const match = bcrypt.compare(Password,foundcustomer.Password)
             if(!match){
                 throw new AuthFailureError('Error: Authentication error!')
             }
@@ -81,7 +81,7 @@ class AccessServices { // Định nghĩa class AccessServices để chứa các 
 
             //4
             const {_id:userId}=foundcustomer
-            const tokens = await  createTokenPair({userId,email:email}, publicKey,privateKey) 
+            const tokens = await  createTokenPair({userId,Email:Email}, publicKey,privateKey) 
             await keyTokenServices.CreateKeyToken({
                 userId,
                 refreshToken :tokens.refreshToken,

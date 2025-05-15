@@ -3,16 +3,16 @@
 
 'use strict' // Bật chế độ nghiêm ngặt trong JavaScript
 const express = require('express') // Nhập (require) thư viện express
-const { apiKey, permission } = require('../auth/checkAuth')
+// const { apiKey, permission } = require('../auth/checkAuth')
 const router = express.Router() // Tạo một đối tượng router của express
 
 //check apikey
-router.use(apiKey)
+// router.use(apiKey)
 
 //check permission
 
-router.use(permission('0000'))
-
+// router.use(permission('0000'))
+// Đã bỏ kiểm tra api key và permission
 
 router.use('/v1/api/inventory', require('./inventory'))
 router.use('/v1/api/checkout', require('./checkout'))
