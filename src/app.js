@@ -3,6 +3,7 @@ require('dotenv').config()
 const { default: helmet } = require('helmet')
 const express = require('express')
 const morgan = require('morgan')
+const path = require('path');
 const app = express()
 
 // Thiết lập middleware morgan để ghi lại các yêu cầu HTTP trong khi phát triển.
@@ -36,6 +37,9 @@ app.use(express.urlencoded({
 
 // Khởi tạo các route
 app.use('', require('./routers'))
+
+// Cho phép truy cập file ảnh tĩnh trong thư mục images
+app.use('/images', express.static(path.join(__dirname, '../images')));
 
 // Xử lý lỗi - middleware để xử lý các lỗi xảy ra trong ứng dụng
 app.use((req,res,next)=>{

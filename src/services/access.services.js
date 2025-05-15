@@ -89,7 +89,7 @@ class AccessServices { // Định nghĩa class AccessServices để chứa các 
             })
             //5
             return { 
-                User:getInfoData({fields:['_id','UserName','Email'],object:foundcustomer}),
+                User:getInfoData({fields:['_id','UserName','Email','roles'],object:foundcustomer}),
                 tokens 
             };
             } catch (error) {

@@ -8,6 +8,14 @@ const { SuccessResponse } = require('../core/success.response')
 
 class ProductController {
     createProduct = async (req, res, next) => {
+        // Parse lại product_attributes nếu là string (do gửi qua form-data)
+        if (typeof req.body.product_attributes === 'string') {
+            try {
+                req.body.product_attributes = JSON.parse(req.body.product_attributes);
+            } catch (e) {
+                req.body.product_attributes = {};
+            }
+        }
         new SuccessResponse({
             message: 'Create new Product Success',
             metadata: await ProductService.createProduct(req.body.product_type, req.body)

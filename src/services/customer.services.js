@@ -4,7 +4,7 @@ const CustomerModel = require("../models/Customer.Model")
 const { findOne } = require("../models/Customer.Model")
 
 const findByEmail = async({Email,select={
-    email:1,password:1,username:1,phone:1,address:1,joindate:1,roles:1
+    Email:1,password:1,UserName:1,phone:1,address:1,joindate:1,roles:1
 }})=>{
     return await CustomerModel.findOne({Email:Email}).select(select).select('+Password').lean()
 }
