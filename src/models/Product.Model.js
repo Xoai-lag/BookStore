@@ -33,13 +33,13 @@ const ProductSchema = new Schema({
     },
     isDraft:{
         type:Boolean,
-        default:true,
+        default:false,
         index:true,
         select:false
     },
     isPublish:{
         type:Boolean,
-        default:false,
+        default:true,
         index:true,
         select:false
     },

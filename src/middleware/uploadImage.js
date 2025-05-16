@@ -2,10 +2,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Đảm bảo thư mục images tồn tại
-const dir = path.join(__dirname, '../../images');
+// Đảm bảo thư mục images mới tồn tại
+const dir = 'd:/download/BookStore/public/images';
 if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
+    fs.mkdirSync(dir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
