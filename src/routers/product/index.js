@@ -21,9 +21,11 @@ router.use(restrictToAdmin)
 //create 
 router.post(
     '', 
-    upload.single('product_thumb'), // middleware upload
+    upload.single('product_thumb'), // middleware upload, upload xong multer Gắn thông tin file vào req.file.
+
+
     asyncHandler(async (req, res, next) => {
-        // Lưu đường dẫn ảnh vào req.body
+        // gắn filename vào req.body
         if (req.file) {
             req.body.product_thumb = `/images/${req.file.filename}`;
         }
